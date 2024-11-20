@@ -11,15 +11,17 @@ if (isset($_GET['views'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
 
     <?php
 
     require_once "./app/views/inc/head.php";
-
     ?>
+    <title><?php echo $url[0]; ?></title>
+
+    
 
 </head>
 
@@ -37,6 +39,8 @@ if (isset($_GET['views'])) {
         require_once "./app/views/inc/navbar.php";
 
         require_once $view;
+
+        require_once "./app/views/inc/footer.php";
     }
 
     require_once "./app/views/inc/script.php";
