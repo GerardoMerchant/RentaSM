@@ -54,7 +54,8 @@ function alertas_ajax(alerta){
             icon: alerta.icono,
             title: alerta.titulo,
             text: alerta.texto,
-            confirmButtonText: 'Aceptar'
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false
         });
 
     }else if(alerta.tipo=="recargar"){
@@ -63,7 +64,8 @@ function alertas_ajax(alerta){
             icon: alerta.icono,
             title: alerta.titulo,
             text: alerta.texto,
-            confirmButtonText: 'Aceptar'
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false
         }).then((result) => {
             if(result.isConfirmed){
                 location.reload();
@@ -76,7 +78,8 @@ function alertas_ajax(alerta){
             icon: alerta.icono,
             title: alerta.titulo,
             text: alerta.texto,
-            confirmButtonText: 'Aceptar'
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false
         }).then((result) => {
             if(result.isConfirmed){
                 document.querySelector(".FormularioAjax").reset();
@@ -89,7 +92,8 @@ function alertas_ajax(alerta){
             icon: alerta.icono,
             title: alerta.titulo,
             text: alerta.texto,
-            confirmButtonText: 'Aceptar'
+            confirmButtonText: 'Aceptar',
+            allowOutsideClick: false
         }).then((result) => {
             if(result.isConfirmed){
                 window.location.href=alerta.url;

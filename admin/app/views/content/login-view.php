@@ -35,7 +35,7 @@
                             </div>
                             <a href="">Forgot Password</a>
                         </div>
-                        <a type="" href="http://admin.rentasm.com/dashboard" class="btn btn-primary py-3 w-100 mb-4">Sign In</a>
+                        <a type="" href="http://admin.rentasm.com/productList" class="btn btn-primary py-3 w-100 mb-4">Sign In</a>
                         <p class="text-center mb-0">Don't have an Account? <a href="">Sign Up</a></p>
                     </div>
                 </div>

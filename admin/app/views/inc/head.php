@@ -10,10 +10,6 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- Icon Font Stylesheet -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
-
 <!-- Libraries Stylesheet -->
 <link href="<?php echo APP_URL; ?>app/views/lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
 <link href="<?php echo APP_URL; ?>app/views/lib/tempusdominus/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
@@ -26,23 +22,19 @@
 
 <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">-->
 
-<!-- DataTables css
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.12.1/datatables.min.css" />
--->
+<!-- DataTables css -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.3/css/responsive.bootstrap5.css">
+
+<!-- /DataTables css -->
+
 <!-- sweetalert2 css -->
 <link rel="stylesheet" href="<?php echo APP_URL; ?>app/views/css/sweetalert2.min.css">
 
+<!-- Jquery -->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>-->
 
-<!-- Bootstrap js
-<script src="<?php //echo APP_URL; 
-                ?>app/views/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js" integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN" crossorigin="anonymous"></script>
--->
-
-<!-- DataTables js
-<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.12.1/datatables.min.js"></script>
--->
 
 

@@ -21,6 +21,19 @@
     height: 200px;
 }
 
+.offcanvas {
+    background-color: #191C24;
+}
+
+.modal-content{
+    background-color: #191C24; 
+
+}
+
+.btn-close{
+    background-color: #fff;
+}
+
 
 /*** Spinner ***/
 #spinner {
