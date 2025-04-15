@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\models\mainModel;
+use PDOException;
 
 class productController extends mainModel
 {
@@ -519,49 +520,68 @@ class productController extends mainModel
     /*---------- /Select data ----------*/
 
     public function deleteCategoryController()
-    {
+{
+    # Storage Data
+    $id = $_POST['id'];
 
-        # Storage Data
+    # Verifying category
+    $data = $this->runQuery("SELECT * FROM category WHERE id = '$id'");
 
-        $id = $_POST['id'];
+    if ($data->rowCount() == 0) {
+        $alert = [
+            "tipo" => "simple",
+            "titulo" => "Ocurrió un error inesperado",
+            "texto" => "No hemos encontrado la categoría en el sistema",
+            "icono" => "error"
+        ];
+        return json_encode($alert);
+        exit();
+    }
 
-        # Verifying category
+    try {
+        # Delete category data
+        $deleteCategory = $this->delateData("category", "id", $id);
 
-        $data = $this->runQuery("SELECT * FROM category WHERE id = '$id'");
-
-        if ($data->rowCount() <= 0) {
-            $alert = [
-                "tipo" => "simple",
-                "titulo" => "Ocurrió un error inesperado",
-                "texto" => "No hemos encontrado la categoria en el sistema",
-                "icono" => "error"
-            ];
-            return json_encode($alert);
-            exit();
-        }
-
-        # Dealate category data
-
-        $delateCategory = $this->delateData("category", "id", $id);
-
-        if ($delateCategory->rowCount() == 1) {
+        if ($deleteCategory->rowCount() == 1) {
             $alert = [
                 "tipo" => "recargar",
-                "titulo" => "Categoria eliminada",
-                "texto" => "La categoria a sido eliminada con exito del sistema",
+                "titulo" => "Categoría eliminada",
+                "texto" => "La categoría ha sido eliminada con éxito del sistema",
                 "icono" => "success"
             ];
         } else {
             $alert = [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
-                "texto" => "No hemos podido eliminar la categoria de el sistema",
+                "texto" => "No hemos podido eliminar la categoría del sistema",
+                "icono" => "error"
+            ];
+        }
+    } catch (PDOException $e) {
+        # Si el error es por restricción de clave foránea
+        if ($e->getCode() == 23000) {
+            $alert = [
+                "tipo" => "simple",
+                "titulo" => "Error de dependencia",
+                "texto" => "No puedes eliminar esta categoría porque tiene productos asociados.",
+                "icono" => "warning"
+            ];
+        } else {
+            $alert = [
+                "tipo" => "simple",
+                "titulo" => "Error en la base de datos",
+                "texto" => "Ocurrió un error inesperado. Contacta al administrador.",
                 "icono" => "error"
             ];
         }
 
-        return json_encode($alert);
+        # Registrar el error en un log para depuración
+        error_log("Error SQL: " . $e->getMessage()."\n", 3, __DIR__."/../logs/error_".date("Y-m-d").".log");
     }
+
+    return json_encode($alert);
+}
+
 
     public function getProductCategoryDataContoller($id)
     {
@@ -571,6 +591,16 @@ class productController extends mainModel
     }
 
     /*-------------------------- /Category Section ---------------------------*/
+
+    /*---------- Run Query ----------*/
+    public function customConsult($query)
+    {
+        //$query = $this->cleanString($query);
+        $data = $this->runQuery($query);
+        return $data;
+    }
+
+    /*---------- /Run Query ----------*/
 
     /*---------- Total sales ----------*/
     public function totalSales($id)
@@ -949,7 +979,7 @@ class productController extends mainModel
                 $alert = [
                     "tipo" => "recargar",
                     "titulo" => "Producto registrado",
-                    "texto" => "El producto " . $productName . " se registro con exito id:".$lastId,
+                    "texto" => "El producto " . $productName . " se registro con exito id:" . $lastId,
                     "icono" => "success"
                 ];
             } else {
@@ -987,10 +1017,8 @@ class productController extends mainModel
     public function updateProductController()
     {
         # Storage Data
-        $productOldImg = $this->cleanString($_POST['productOldImg']); // hidden
+
         $productId = $this->cleanString($_POST['productId']); // hidden
-        $productOldStock = $this->cleanString($_POST['productOldStock']); // hidden
-        $productSku_original = $this->cleanString($_POST['productSku_original']); // hidden
         $productName = $this->cleanString($_POST['productName']);
         $productSku = $this->cleanString($_POST['productSku']);
         $productDescription = $this->cleanString($_POST['productDescription']);
@@ -998,11 +1026,32 @@ class productController extends mainModel
         $productStock = $this->cleanString($_POST['productStock']);
         $productCategoryId = $this->cleanString($_POST['productCategoryId']);
         $productStatus = $this->cleanString($_POST['productStatus']);
+        $productStockOption = $this->cleanString($_POST['productStockOption']);
+        $totalStock = 0;
 
-        // Validate required hidden data
+        // Validate id
+
+        $validateId = $this->selectData("unique", "products", "id", $productId);
+        if ($validateId->rowCount() != 1) {
+            $alert = [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "texto" => "El ID del producto es incorrecto.",
+                "icono" => "error"
+            ];
+            return json_encode($alert);
+            exit();
+        } else {
+            $validateId = $validateId->fetch();
+            $productOldImg = $validateId->image_url;
+            $productOldStock = $validateId->current_stock;
+            $productSku_original = $validateId->sku;
+        }
+
+        // /Validate id
 
         # Checking required fields #
-        $fields = [$productId, $productSku_original, $productName, $productSku, $productDescription, $productPrice, $productStock, $productCategoryId, $productStatus];
+        $fields = [$productId, $productSku_original, $productName, $productSku, $productDescription, $productPrice, $productCategoryId, $productStatus];
 
         foreach ($fields as $field) {
             if (!isset($field) || empty($field)) {
@@ -1054,7 +1103,7 @@ class productController extends mainModel
             exit();
         }
 
-        if ($this->verifyData("[\d]{1,5}", $productStock)) {
+        if ($this->verifyData("$|^\d{1,5}", $productStock)) {
             $alert = [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
@@ -1065,7 +1114,7 @@ class productController extends mainModel
             exit();
         }
 
-        if ($this->verifyData("[\d]{1,5}", $productPrice)) {
+        if ($this->verifyData("[\d .,]{1,10}", $productPrice)) {
             $alert = [
                 "tipo" => "simple",
                 "titulo" => "Ocurrió un error inesperado",
@@ -1118,11 +1167,24 @@ class productController extends mainModel
 
         # /SKU Validation #
 
-        # Stock count #
+        # Stock managment #
+
         if ($productStock != "") {
-            $productStock += $productOldStock;
+
+            if ($productStockOption == "addition") {
+
+                $totalStock = $productStock + $productOldStock;
+            } elseif ($productStockOption === "removal") {
+
+                $totalStock = $productOldStock - $productStock;
+            }
+        } else {
+            $totalStock = $productOldStock;
         }
-        # /Stock count #
+
+
+
+        # /Stock managment #
 
         # Image management #
 
@@ -1208,7 +1270,7 @@ class productController extends mainModel
                 exit();
             }
         } else {
-            $imgName = "";
+            $imgName = $productOldImg;
         }
 
         # /Image management #
@@ -1234,7 +1296,7 @@ class productController extends mainModel
             [
                 "name_field" => "current_stock",
                 "marker_field" => ":productStock",
-                "value_field" => $productStock
+                "value_field" => $totalStock
             ],
             [
                 "name_field" => "category_id",
@@ -1262,24 +1324,18 @@ class productController extends mainModel
                 "value_field" => 0
             ],
             [
-                "name_field" => "creation_date",
-                "marker_field" => ":categoryCreated",
-                "value_field" => date("Y-m-d H:i:s")
-            ],
-            [
                 "name_field" => "modification_date",
-                "marker_field" => ":categoryModified",
+                "marker_field" => ":productModified",
                 "value_field" => date("Y-m-d H:i:s")
             ],
 
         ];
 
         $condition = [
-            [
-                "condition_field" => "id",
-                "condition_marker" => ":categoryId",
-                "condition_value" => $productId
-            ]
+
+            "condition_field" => "id",
+            "condition_marker" => ":productId",
+            "condition_value" => $productId
 
         ];
 
@@ -1287,12 +1343,68 @@ class productController extends mainModel
 
         $public_product = $this->updateData("products", $productDataReg, $condition);
         if ($public_product->rowCount() == 1) {
-            $alert = [
-                "tipo" => "recargar",
-                "titulo" => "Producto registrado",
-                "texto" => "El producto " . $productName . " se actualizó con exito.",
-                "icono" => "success"
-            ];
+
+            if ($productStock != "") {
+                $stock_data_reg = [
+                    [
+                        "name_field" => "product_id",
+                        "marker_field" => ":productId",
+                        "value_field" => $productId
+                    ],
+                    [
+                        "name_field" => "change_type",
+                        "marker_field" => ":change",
+                        "value_field" => $productStockOption
+                    ],
+                    [
+                        "name_field" => "quantity",
+                        "marker_field" => ":quantity",
+                        "value_field" => $productStock
+                    ],
+                    [
+                        "name_field" => "previous_stock",
+                        "marker_field" => ":previous_stock",
+                        "value_field" => $productOldStock
+                    ],
+                    [
+                        "name_field" => "new_stock",
+                        "marker_field" => ":new_stock",
+                        "value_field" => $totalStock
+                    ],
+                    [
+                        "name_field" => "created_at",
+                        "marker_field" => ":created_at",
+                        "value_field" => date("Y-m-d H:i:s")
+                    ],
+                    [
+                        "name_field" => "user_id",
+                        "marker_field" => ":user_id",
+                        "value_field" => 0
+                    ],
+                    [
+                        "name_field" => "notes",
+                        "marker_field" => ":notes",
+                        "value_field" => "Actualizacion del producto"
+                    ]
+                ];
+
+                $stock_movement = $this->saveData("stock_movements", $stock_data_reg);
+                if ($stock_movement->rowCount() == 1) {
+                    $alert = [
+                        "tipo" => "recargar",
+                        "titulo" => "Producto Actualizado",
+                        "texto" => "El producto " . $productName . " se actualizó con exito.",
+                        "icono" => "success"
+                    ];
+                }
+            } else {
+                $alert = [
+                    "tipo" => "recargar",
+                    "titulo" => "Producto Actualizado",
+                    "texto" => "El producto " . $productName . " se actualizó con exito.",
+                    "icono" => "success"
+                ];
+            }
         } else {
             if (is_file($img_dir . $imgName)) {
                 chmod($img_dir . $imgName, 0777);
@@ -1310,4 +1422,55 @@ class productController extends mainModel
     }
 
     /*---------- /update product ----------*/
+
+    /*---------- Disable product ----------*/
+
+    public function turnProductStatusContorller()
+    {
+        $id = $_POST['id'];
+        $turn_option = $_POST['turn_option'];
+        
+
+        $data = [
+            [
+                "name_field" => "status",
+                "marker_field" => ":status",
+                "value_field" => $turn_option
+            ],
+
+            [
+                "name_field" => "modification_date",
+                "marker_field" => ":modification_date",
+                "value_field" => date("Y-m-d H:i:s")
+            ]
+        ];
+
+        $condition = [
+            "condition_field" => "id",
+            "condition_marker" => ":productId",
+            "condition_value" => $id
+        ];
+
+        $disableProduct = $this->updateData("products", $data, $condition);
+
+        if ($disableProduct->rowCount() == 1) {
+            $alert = [
+                "tipo" => "recargar",
+                "titulo" => "Status Actualizado",
+                "texto" => "",
+                "icono" => "success"
+            ];
+        } else {
+            $alert = [
+                "tipo" => "simple",
+                "titulo" => "Ocurrió un error inesperado",
+                "texto" => "Algo salio mal, intente nuevamente.",
+                "icono" => "error"
+            ];
+        }
+
+        return json_encode($alert);
+    }
+
+    /*---------- /Disable product ----------*/
 }

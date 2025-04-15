@@ -7,9 +7,20 @@ use app\controllers\productController;
 $pc = new productController();
 $product = $pc->selectDataController("unique", "products", "id", $id);
 
+
 if ($product->rowCount() >= 1) {
 
     $product = $product->fetch();
+
+    // Get stock data of the product
+    $stock = $pc->selectDataController("unique", "stock_movements", "product_id", $id);
+    $stock = $stock->fetch();
+
+    // Get last restocked
+    $restocked = $pc->customConsult("SELECT * FROM stock_movements WHERE product_id = $id ORDER BY created_at DESC LIMIT 1");
+    $restocked = $restocked->fetch();
+    //$test = $pc->customConsult("SELECT * FROM products WHERE id = '$id'");
+    //$test = $test->fetch();
 } else {
 
     $pc->writeToConsole("No hay datos");
@@ -19,11 +30,9 @@ if ($product->rowCount() >= 1) {
 
 <!-- Form Start -->
 <form class="FormularioAjax" method="POST" action="<?php echo APP_URL; ?>app/ajax/productAjax.php" autocomplete="off" enctype="multipart/form-data">
+
     <input type="hidden" name="product_module" value="updateProduct">
     <input type="hidden" name="productId" value="<?php echo $product->id; ?>">
-    <input type="hidden" name="productSku_original" value="<?php echo $product->id; ?>">
-    <input type="hidden" name="productOldImg" value="<?php echo $product->image_url; ?>">
-    <input type="hidden" name="productOldStock" value="<?php echo $product->stock; ?>">
 
     <div class="container-fluid pt-4 px-4">
         <div class="row">
@@ -33,7 +42,7 @@ if ($product->rowCount() >= 1) {
                         <h3 class="m-0">ACTUALIZAR PRODUCTO</h3>
                     </div>
                     <div class="col-md-6 text-end"> <!-- Alinea el botón a la derecha -->
-                    <a href="<?php echo APP_URL; ?>productList/" class="btn btn-secondary">Volver a la lista de categorias</a>
+                        <a href="<?php echo APP_URL; ?>productList/" class="btn btn-secondary">Volver a la lista de productos</a>
                         <button type="submit" class="btn btn-primary">Actualizar Producto</button>
                     </div>
                 </div>
@@ -115,7 +124,7 @@ if ($product->rowCount() >= 1) {
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="productPrice" class="form-label">Precio base</label>
-                            <input type="number" class="form-control" id="productPrice" name="productPrice" value="<?php echo $product->price ?>" placeholder="Precio">
+                            <input type="number" step="any" class="form-control" id="productPrice" name="productPrice" value="<?php echo $product->price ?>" placeholder="Precio">
                         </div>
                     </div>
                 </div>
@@ -128,20 +137,31 @@ if ($product->rowCount() >= 1) {
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="productStock" class="form-label">Agregar al stock</label>
-                            <input type="number" class="form-control" id="productStock" name="productStock" placeholder="Stock">
-                            </div>
-                            <div class="mb-3 ms-3">
-                                <h6 class="mb-2 fw-normal"><?php echo "Producto en Stock ahora: " . $product->stock ?> </h6>
-                                <h6 class="mb-2 fw-normal"><?php echo "Producto en transito: " . $product->stock ?> </h6>
-                                <h6 class="mb-2 fw-normal"><?php echo "Producto reabastecido por ultma vez: " . $product->stock ?> </h6>
-                                <h6 class="mb-2 fw-normal"><?php echo "Total del producto desde su creación: " . $product->stock ?> </h6>
-                            </div>
+                            <label for="" class="form-label">Seleccione una opción.</label>
+                            <div class="form-label" role="group">
+                                <input type="radio" class="btn-check" value="addition" name="productStockOption" id="btn_addition" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-primary" for="btn_addition">Agregar</label>
 
-                        
+                                <input type="radio" class="btn-check" value="removal" name="productStockOption" id="btn_removal" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="btn_removal">Remover</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="productStock" class="form-label">Agregar o remover del stock</label>
+                            <input type="number" class="form-control" id="productStock" name="productStock" placeholder="0">
+                        </div>
+                        <div class="mb-3 ms-3">
+                            <h6 class="mb-2 fw-normal"><?php echo "Producto en Stock ahora: " . $product->current_stock ?> </h6>
+                            <h6 class="mb-2 fw-normal"><?php echo "Producto en transito: No data" ?> </h6>
+                            <h6 class="mb-2 fw-normal"><?php echo "Movimiento hecho por ultima vez: " . $restocked->created_at ?> </h6>
+                            <h6 class="mb-2 fw-normal"><?php echo "Total del producto desde su creación (Esto no tiene sentido): " . $stock->quantity ?> </h6>
+                        </div>
+
+
                         <div class="mb-3">
                             <label class="form-label" for="productCategory">Categoría</label>
-                            <select class="form-select" id="productCategory" name="productCategoryId" aria-label="Selecciona la categoría">
+                            <select class="form-select" id="productCategory" name="productCategoryId" value="<?php echo $product->category_id; ?>" aria-label="Selecciona la categoría">
                                 <option selected value="">Seleccione la categoría</option>
                                 <?php
                                 $categories = $pc->selectDataController("normal", "category", "*", "");
@@ -151,8 +171,11 @@ if ($product->rowCount() >= 1) {
                                 }
                                 foreach ($categories as $category) {
 
-                                    echo "<option value='".$category->id."'>".$category->name."</option>";
-                                    
+                                    if ($category->id === $product->category_id) {
+                                        echo "<option selected value='" . $category->id . "'>" . $category->name . "</option>";
+                                    }else
+
+                                    echo "<option value='" . $category->id . "'>" . $category->name . "</option>";
                                 }
                                 ?>
 
@@ -163,9 +186,9 @@ if ($product->rowCount() >= 1) {
                             <label class="form-label" for="productStatus">Estatus</label>
                             <select class="form-select" id="productStatus"
                                 aria-label="Selecciona la categoria" name="productStatus">
-                                <option value="1" selected>Planificado</option>
-                                <option value="2">Publicado</option>
-                                <option value="3">Inactivo</option>
+                                <option value="1" <?= ($product->status == 1) ? 'selected' : '' ?>>Planificado</option>
+                                <option value="2" <?= ($product->status == 2) ? 'selected' : '' ?>>Publicado</option>
+                                <option value="3" <?= ($product->status == 3) ? 'selected' : '' ?>>Inactivo</option>
                             </select>
                         </div>
                     </div>

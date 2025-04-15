@@ -14,8 +14,8 @@
 			echo $productInst->publicProductController();
 		}
         
-		if($_POST['product_module']=="delate"){
-			//echo $productInst->eliminarProductoControlador();
+		if($_POST['product_module']=="disableProduct"){
+			echo $productInst->turnProductStatusContorller();
 		}
 
 		if($_POST['product_module']=="updateProduct"){
